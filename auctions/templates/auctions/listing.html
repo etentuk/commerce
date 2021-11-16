@@ -2,11 +2,14 @@
 
 {% block body %}
 {% if listing %}
-<h2>{{listing.title}}</h2>
-<p>Category: {{listing.category}}</p>
-<p>Description: {{listing.description}}</p>
-<p>price: {{listing.price}}</p>
 
+
+<h2>{{listing.title}}</h2>
+<div>
+    <p>Category: {{listing.category}}</p>
+    <p>Description: {{listing.description}}</p>
+    <p>price: {{listing.price}}</p>
+</div>
 {% else %}
 <h1>Error 404: Not Found!</h1>
 <p>This listing does not exist</p>
