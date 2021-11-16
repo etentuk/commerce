@@ -2,4 +2,11 @@
 
 {% block body %}
 <h2>Create User</h2>
+<form action="{% url 'create_listing' %}" method='post'>
+    {% csrf_token %}
+    <div style="display: flex; flex-direction: column; width: 40%">
+        {{form}}
+        <input type="submit">
+    </div>
+</form>
 {% endblock %}

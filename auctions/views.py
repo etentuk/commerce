@@ -1,10 +1,13 @@
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
+from .forms import ListingForm
+from django.core.exceptions import ObjectDoesNotExist
 
-from .models import User
+from .models import Listing, User
 
 
 def index(request):
@@ -63,5 +66,26 @@ def register(request):
         return render(request, "auctions/register.html")
 
 
+@login_required(redirect_field_name='login')
 def create_listing(request):
-    return render(request, "auctions/create_listing.html")
+    if request.method == 'POST':
+        form = ListingForm(request.POST)
+        if form.is_valid():
+            new_listing = form.save(commit=False)
+            new_listing.owner = request.user
+            new_listing.save()
+            return HttpResponseRedirect(reverse("listing", args=[new_listing.id]))
+    return render(request, "auctions/create_listing.html", {
+        "form": ListingForm
+    })
+
+
+def listing(request, listing_id):
+    listing = None
+    try:
+        listing = Listing.objects.get(pk=listing_id)
+    except ObjectDoesNotExist:
+        listing = None
+    return render(request, "auctions/listing.html", {
+        "listing": listing
+    })

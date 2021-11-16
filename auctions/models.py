@@ -13,13 +13,19 @@ class Listing(models.Model):
     price = models.IntegerField()
     image_url = models.URLField(blank=True)
     category = models.ForeignKey(
-        'Categories', blank=True, on_delete=SET(""), related_name='listings')
+        'Categories', blank=True, null=True, on_delete=SET(""), related_name='listings')
     owner = models.ForeignKey(
         User, on_delete=CASCADE, related_name="listings"
     )
     created_at = models.DateTimeField(auto_now_add=True)
     active = models.BooleanField(default=False)
 
+    def __str__(self):
+        return f"{self.title} - {self.category}"
+
 
 class Categories(models.Model):
     name = models.CharField(max_length=64)
+
+    def __str__(self):
+        return f"{self.name}"
