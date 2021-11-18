@@ -29,3 +29,14 @@ class Categories(models.Model):
 
     def __str__(self):
         return f"{self.name}"
+
+
+class WatchList(models.Model):
+    item = models.ForeignKey(
+        Listing, on_delete=CASCADE, related_name='watchlist_items')
+    owner = models.ForeignKey(
+        User, on_delete=CASCADE, related_name='watchlist_items')
+    date_added = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return f"{self.item}"

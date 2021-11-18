@@ -7,7 +7,7 @@ from django.urls import reverse
 from .forms import ListingForm
 from django.core.exceptions import ObjectDoesNotExist
 
-from .models import Listing, User
+from .models import Listing, User, WatchList
 
 
 def index(request):
@@ -84,11 +84,28 @@ def create_listing(request):
 
 
 def listing(request, listing_id):
-    listing = None
     try:
         listing = Listing.objects.get(pk=listing_id)
     except ObjectDoesNotExist:
         listing = None
+    try:
+        added = listing.watchlist_items.get(owner=request.user)
+    except ObjectDoesNotExist:
+        added = None
+
     return render(request, "auctions/listing.html", {
-        "listing": listing
-    })
+        "listing": listing,
+        "in_watchlist": added, })
+
+
+def watchlist_action(request, action, listing_id):
+    listing = Listing.objects.get(pk=listing_id)
+    match action:
+        case 'add':
+            WatchList.objects.create(
+                item=listing, owner=request.user)
+        case 'remove':
+            WatchList.objects.filter(owner=request.user, item=listing).delete()
+        case _:
+            return
+    return HttpResponseRedirect(reverse("listing", args=[listing_id]))

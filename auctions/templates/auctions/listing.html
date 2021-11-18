@@ -4,17 +4,24 @@
 {% if listing %}
 
 
+
 <h2>{{listing.title}}</h2>
 <div>
+    {% if in_watchlist %}
+    <a class="btn btn-primary" href="{% url 'watchlist_action' 'remove' listing.id %}" role="button">Remove from
+        Watchlist</a>
+    {% else %}
+    <a class="btn btn-primary" href="{% url 'watchlist_action' 'add' listing.id %}" role="button">Add to Watchlist</a>
+    {% endif %}
+
     <p>Category: {{listing.category}}</p>
     <p>Description: {{listing.description}}</p>
     <p>price: {{listing.price}}</p>
-</div>
-{% else %}
-<h1>Error 404: Not Found!</h1>
+    <p>Created At: {{listing.created_at}}</p>
+    <p>Image: {{listing.image_url}}</p>
+    <p>price: ${{listing.price}}</p>
+    <p>Posted By: {{listing.owner}}</p>
+</div> {% else %} <h1>Error 404: Not Found!</h1>
 <p>This listing does not exist</p>
 {% endif %}
-
-
-
 {% endblock %}
