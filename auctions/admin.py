@@ -1,6 +1,6 @@
 from typing import List
 from django.contrib import admin
-from .models import Bid, Categories, Listing, User, WatchList
+from .models import Bid, Categories, Comment, Listing, User, WatchList
 
 
 class ListingDisplay(admin.ModelAdmin):
@@ -21,3 +21,4 @@ admin.site.register(Categories)
 admin.site.register(User)
 admin.site.register(WatchList, WatchListDisplay)
 admin.site.register(Bid, BidDisplay)
+admin.site.register(Comment)

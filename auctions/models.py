@@ -54,3 +54,17 @@ class Bid(models.Model):
 
     def __str__(self):
         return f"{self.listing.title} - {self.bid_price}"
+
+
+class Comment(models.Model):
+    title = models.CharField(max_length=64)
+    comment = models.TextField()
+    listing = models.ForeignKey(
+        Listing, on_delete=CASCADE, related_name='comments'
+    )
+    owner = models.ForeignKey(
+        User, on_delete=CASCADE, related_name='comments')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title}: {self.listing}"

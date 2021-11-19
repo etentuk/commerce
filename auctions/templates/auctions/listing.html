@@ -38,6 +38,15 @@
         <input type="number" name="bid_price" min={{current_price}} placeholder="Enter Bid">
         <input type=submit value="Place Bid">
     </form>
+    <form action="{% url "listing_comment" listing.id%}" method="post">
+        {% csrf_token %}
+        {{comment_form}}
+        <input type=submit value="Submit Comment">
+    </form>
+    {% for comment in comments  %}
+    <p>Title: {{comment.title}}</p>
+    <p>Comment: {{comment.comment}}</p>
+    {% endfor %}
 </div>
 {% else %} <h1>Error 404: Not Found!</h1>
 <p>This listing does not exist</p>

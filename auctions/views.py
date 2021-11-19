@@ -5,7 +5,7 @@ from django.db.models.aggregates import Max
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
-from .forms import BidForm, ListingForm
+from .forms import BidForm, CommentForm, ListingForm
 from django.core.exceptions import ObjectDoesNotExist
 
 from .models import Listing, User, WatchList, Bid
@@ -114,6 +114,7 @@ def listing(request, listing_id):
         if(listing.active == False and listing.bids.order_by('-bid_price')[0].owner == request.user):
             print(listing.bids.order_by('-bid_price')[0])
             winner = True
+        comments = listing.comments.all()
     try:
         added = listing.watchlist_items.get(owner=request.user)
     except ObjectDoesNotExist:
@@ -126,6 +127,8 @@ def listing(request, listing_id):
         "current_price": current_price,
         "message": message,
         "current_user": request.user == listing.owner,
+        "comment_form": CommentForm(),
+        "comments": comments
     })
 
 
@@ -146,4 +149,15 @@ def watchlist_action(request, action, listing_id):
             WatchList.objects.filter(owner=request.user, item=listing).delete()
         case _:
             return
+    return HttpResponseRedirect(reverse("listing", args=[listing_id]))
+
+
+def create_comment(request, listing_id):
+    listing = Listing.objects.get(pk=listing_id)
+    form = CommentForm(request.POST)
+    if(form.is_valid):
+        comment = form.save(commit=False)
+        comment.listing = listing
+        comment.owner = request.user
+        comment.save()
     return HttpResponseRedirect(reverse("listing", args=[listing_id]))
