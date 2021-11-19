@@ -1,6 +1,6 @@
 from typing import List
 from django.forms import ModelForm
-from .models import Listing
+from .models import Bid, Listing
 
 
 class ListingForm(ModelForm):
@@ -8,3 +8,9 @@ class ListingForm(ModelForm):
         model = Listing
         fields = ['title', 'description', 'price',
                   'image_url', 'category', 'active']
+
+
+class BidForm(ModelForm):
+    class Meta:
+        model = Bid
+        fields = ['bid_price']
