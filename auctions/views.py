@@ -5,10 +5,10 @@ from django.db.models.aggregates import Max
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
-from .forms import BidForm, CommentForm, ListingForm
+from .forms import CommentForm, ListingForm
 from django.core.exceptions import ObjectDoesNotExist
 
-from .models import Listing, User, WatchList, Bid
+from .models import Categories, Listing, User, WatchList, Bid
 
 
 def index(request):
@@ -116,7 +116,10 @@ def listing(request, listing_id):
             winner = True
         comments = listing.comments.all()
     try:
-        added = listing.watchlist_items.get(owner=request.user)
+        if(request.user.is_authenticated):
+            added = listing.watchlist_items.get(owner=request.user)
+        else:
+            added = None
     except ObjectDoesNotExist:
         added = None
 
@@ -161,3 +164,26 @@ def create_comment(request, listing_id):
         comment.owner = request.user
         comment.save()
     return HttpResponseRedirect(reverse("listing", args=[listing_id]))
+
+
+def watchlist(request):
+    listings = request.user.watchlist_items.all()
+    return render(request, "auctions/watchlist.html", {
+        "listings": listings
+    })
+
+
+def categories(request):
+    categories = Categories.objects.all()
+    return render(request, "auctions/categories.html", {
+        "categories": categories
+    })
+
+
+def category_page(request, category_id):
+    category = Categories.objects.get(pk=category_id)
+    print(category.listings.all())
+    return render(request, "auctions/category_page.html", {
+        "listings": category.listings.all(),
+        "category": category.name
+    })

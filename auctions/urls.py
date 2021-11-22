@@ -13,6 +13,9 @@ urlpatterns = [
          views.close_listing, name="close_listing"),
     path("listing/comment/<int:listing_id>",
          views.create_comment, name="listing_comment"),
+    path("watchlist", views.watchlist, name="watchlist"),
+    path("categories", views.categories, name="categories"),
+    path("category/<int:category_id>", views.category_page, name="category_page"),
     path("watchlist/<str:action>/<int:listing_id>",
          views.watchlist_action, name="watchlist_action")
 ]

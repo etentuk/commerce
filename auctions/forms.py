@@ -10,12 +10,6 @@ class ListingForm(ModelForm):
                   'image_url', 'category', 'active']
 
 
-class BidForm(ModelForm):
-    class Meta:
-        model = Bid
-        fields = ['bid_price']
-
-
 class CommentForm(ModelForm):
     class Meta:
         model = Comment
