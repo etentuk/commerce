@@ -4,17 +4,51 @@
 {% if listing %}
 
 
+
 <h2>{{listing.title}}</h2>
 <div>
+    {% if in_watchlist %}
+    <a class="btn btn-primary" href="{% url 'watchlist_action' 'remove' listing.id %}" role="button">Remove from
+        Watchlist</a>
+    {% else %}
+    <a class="btn btn-primary" href="{% url 'watchlist_action' 'add' listing.id %}" role="button">Add to Watchlist</a>
+    {% endif %}
+    {% if current_user and listing.active%}
+    <a class="btn btn-primary" href="{% url "close_listing" listing.id %}" role="button">Close</a>
+    {% endif %}
+    {% if winner %}
+    <div class="alert alert-success" role="alert">
+        You are the Winner!
+    </div>
+    {% endif %}
     <p>Category: {{listing.category}}</p>
     <p>Description: {{listing.description}}</p>
-    <p>price: {{listing.price}}</p>
+    <p>Published: {{listing.created_at}}</p>
+    <p>Image: {{listing.image_url}}</p>
+    <p>Current Price: ${{current_price}}</p>
+    <p>Posted By: {{listing.owner}}</p>
+    <p>Status: {{listing.active}}</p>
+    {% if message %}
+    <div class="alert alert-danger" role="alert">
+        {{message}}
+    </div>
+    {% endif %}
+    <form action="{% url "listing" listing.id%}" method="post">
+        {% csrf_token %}
+        <input type="number" name="bid_price" min={{current_price}} placeholder="Enter Bid">
+        <input type=submit value="Place Bid">
+    </form>
+    <form action="{% url "listing_comment" listing.id%}" method="post">
+        {% csrf_token %}
+        {{comment_form}}
+        <input type=submit value="Submit Comment">
+    </form>
+    {% for comment in comments  %}
+    <p>Title: {{comment.title}}</p>
+    <p>Comment: {{comment.comment}}</p>
+    {% endfor %}
 </div>
-{% else %}
-<h1>Error 404: Not Found!</h1>
+{% else %} <h1>Error 404: Not Found!</h1>
 <p>This listing does not exist</p>
 {% endif %}
-
-
-
 {% endblock %}

@@ -1,13 +1,14 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
+from django.db.models.aggregates import Max
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
-from .forms import ListingForm
+from .forms import CommentForm, ListingForm
 from django.core.exceptions import ObjectDoesNotExist
 
-from .models import Listing, User
+from .models import Categories, Listing, User, WatchList, Bid
 
 
 def index(request):
@@ -85,10 +86,104 @@ def create_listing(request):
 
 def listing(request, listing_id):
     listing = None
+    added = None
+    current_price = 0
+    message = ""
+    winner = False
+
+    if request.method == 'POST':
+        listing = Listing.objects.get(pk=listing_id)
+        max_bid = listing.bids.aggregate(Max('bid_price'))['bid_price__max']
+        print(max_bid, 'max')
+        placed_bid = int(request.POST['bid_price'])
+        current_price = int(max_bid or 0) or listing.price
+        if(current_price > placed_bid):
+            message = 'Bid must be greater or equal to current value'
+        else:
+            listing.price = placed_bid
+            listing.save()
+            Bid.objects.create(bid_price=placed_bid,
+                               owner=request.user, listing=listing)
     try:
         listing = Listing.objects.get(pk=listing_id)
     except ObjectDoesNotExist:
         listing = None
+    else:
+        current_price = int(listing.bids.aggregate(Max('bid_price'))[
+            'bid_price__max'] or 0) or listing.price
+        if(listing.active == False and listing.bids.order_by('-bid_price')[0].owner == request.user):
+            print(listing.bids.order_by('-bid_price')[0])
+            winner = True
+        comments = listing.comments.all()
+    try:
+        if(request.user.is_authenticated):
+            added = listing.watchlist_items.get(owner=request.user)
+        else:
+            added = None
+    except ObjectDoesNotExist:
+        added = None
+
     return render(request, "auctions/listing.html", {
-        "listing": listing
+        "listing": listing,
+        "in_watchlist": added,
+        "winner": winner,
+        "current_price": current_price,
+        "message": message,
+        "current_user": request.user == listing.owner,
+        "comment_form": CommentForm(),
+        "comments": comments
+    })
+
+
+def close_listing(request, listing_id):
+    listing = Listing.objects.get(pk=listing_id)
+    listing.active = False
+    listing.save()
+    return HttpResponseRedirect(reverse("listing", args=[listing_id]))
+
+
+def watchlist_action(request, action, listing_id):
+    listing = Listing.objects.get(pk=listing_id)
+    match action:
+        case 'add':
+            WatchList.objects.create(
+                item=listing, owner=request.user)
+        case 'remove':
+            WatchList.objects.filter(owner=request.user, item=listing).delete()
+        case _:
+            return
+    return HttpResponseRedirect(reverse("listing", args=[listing_id]))
+
+
+def create_comment(request, listing_id):
+    listing = Listing.objects.get(pk=listing_id)
+    form = CommentForm(request.POST)
+    if(form.is_valid):
+        comment = form.save(commit=False)
+        comment.listing = listing
+        comment.owner = request.user
+        comment.save()
+    return HttpResponseRedirect(reverse("listing", args=[listing_id]))
+
+
+def watchlist(request):
+    listings = request.user.watchlist_items.all()
+    return render(request, "auctions/watchlist.html", {
+        "listings": listings
+    })
+
+
+def categories(request):
+    categories = Categories.objects.all()
+    return render(request, "auctions/categories.html", {
+        "categories": categories
+    })
+
+
+def category_page(request, category_id):
+    category = Categories.objects.get(pk=category_id)
+    print(category.listings.all())
+    return render(request, "auctions/category_page.html", {
+        "listings": category.listings.all(),
+        "category": category.name
     })
