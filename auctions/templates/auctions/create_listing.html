@@ -4,9 +4,9 @@
 <h2>Create User</h2>
 <form action="{% url 'create_listing' %}" method='post'>
     {% csrf_token %}
-    <div style="display: flex; flex-direction: column; width: 40%">
+    <div style="display: flex; flex-direction: column; width: 70%; margin: 0 auto;">
         {{form}}
-        <input type="submit">
+        <input class="btn btn-secondary" type="submit" style="width: 30%; margin: 0 auto; ">
     </div>
 </form>
 {% endblock %}

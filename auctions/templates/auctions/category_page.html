@@ -3,15 +3,17 @@
 {% block body %}
 <h2>{{category}} Category</h2>
 {% if listings %}
-<div class="row row-cols-1 row-cols-md-4 g-4">
+<div class="row row-cols-1 row-cols-md-4 g-4" style="padding-top:20px">
     {% for listing in listings  %}
-    <div class="col">
+    <div class="col" style="padding-top:15px; padding-bottom:15px;">
         <div class="card h-100">
-            {% if listing.image_url %}
-            <img src="{{listing.image_url}}" class="card-img-top" alt="...">
-            {% else %}
-            <img src="{% static 'auctions/default-no-image-1.png' %}" class="card-img-top" alt="...">
-            {% endif %}
+            <div style="height:55%;" class="d-flex align-items-center">
+                {% if listing.image_url %}
+                <img src="{{listing.image_url}}" class="card-img-top" alt="...">
+                {% else %}
+                <img src="{% static 'auctions/default-no-image-1.png' %}" class="card-img-top" alt="...">
+                {% endif %}
+            </div>
             <div class="card-body">
                 <h5 class="card-title">
                     <a href="{% url 'listing' listing.id %}">{{listing.title}}</a></h5>
@@ -24,7 +26,9 @@
         </div>
     </div>
     {% endfor %}
+
 </div>
+
 {% else %}
 <div>there is no listing </div>
 {% endif %}
