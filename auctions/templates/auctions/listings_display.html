@@ -1,34 +1,37 @@
 {% extends "auctions/layout.html" %}
 {% load static %}
 {% block body %}
-<h2>Watchlist</h2>
+
+<h2>{{category}} {{title}}</h2>
 {% if listings %}
 <div class="row row-cols-1 row-cols-md-4 g-4" style="padding-top:20px">
     {% for listing in listings  %}
     <div class="col" style="padding-top:15px; padding-bottom:15px;">
         <div class="card h-100">
             <div style="height:55%;" class="d-flex align-items-center">
-                {% if listing.item.image_url %}
-                <img src="{{listing.item.image_url}}" class="card-img-top" alt="...">
+                {% if listing.image_url %}
+                <img src="{{listing.image_url}}" class="card-img-top" alt="...">
                 {% else %}
-                <img src="{% static 'auctions/default-no-image-1.png' %}" class="card-img-top" alt="...">
+                <img src="{% static 'auctions/no-image.png' %}" class="card-img-top" alt="...">
                 {% endif %}
             </div>
             <div class="card-body">
                 <h5 class="card-title">
-                    <a href="{% url 'listing' listing.item.id %}">{{listing.item.title}}</a></h5>
-                <h6 class=" card-title">Current Price: ${{listing.item.price}}</h5>
-                    <p class="card-text">{{listing.item.description}}</p>
+                    <a href="{% url 'listing' listing.id %}">{{listing.title}}</a></h5>
+                <h6 class=" card-title">Current Price: ${{listing.price}}</h5>
+                    <p class="card-text">{{listing.description}}</p>
             </div>
             <div class="card-footer">
-                <small class="text-muted">Created At: {{listing.item.created_at}}</small>
+                <small class="text-muted">Created At: {{listing.created_at}}</small>
             </div>
         </div>
     </div>
     {% endfor %}
+
 </div>
+
 {% else %}
 <div>there is no listing </div>
 {% endif %}
 
-{% endblock  %}
+{% endblock %}

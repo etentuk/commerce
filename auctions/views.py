@@ -13,8 +13,9 @@ from .models import Categories, Listing, User, WatchList, Bid
 
 def index(request):
     listings = Listing.objects.exclude(active=False).all
-    return render(request, "auctions/index.html", {
-        "listings": listings
+    return render(request, "auctions/listings_display.html", {
+        "listings": listings,
+        "title": "Active Listings"
     })
 
 
@@ -70,7 +71,7 @@ def register(request):
         return render(request, "auctions/register.html")
 
 
-@login_required(redirect_field_name='login')
+@login_required(login_url='/login')
 def create_listing(request):
     if request.method == 'POST':
         form = ListingForm(request.POST)
@@ -91,29 +92,36 @@ def listing(request, listing_id):
     message = ""
     winner = False
 
-    if request.method == 'POST':
+    if request.method == 'POST' and request.user.is_authenticated:
         listing = Listing.objects.get(pk=listing_id)
         max_bid = listing.bids.aggregate(Max('bid_price'))['bid_price__max']
-        print(max_bid, 'max')
         placed_bid = int(request.POST['bid_price'])
-        current_price = int(max_bid or 0) or listing.price
-        if(current_price > placed_bid):
+        listing_price = int(max_bid or 0) or listing.price
+
+        if((listing_price == listing.price) and not max_bid and placed_bid < listing_price):
             message = 'Bid must be greater or equal to current value'
+        elif(placed_bid < listing.price and max_bid):
+            message = 'Bid must be greater than current price'
         else:
             listing.price = placed_bid
             listing.save()
             Bid.objects.create(bid_price=placed_bid,
                                owner=request.user, listing=listing)
+
     try:
         listing = Listing.objects.get(pk=listing_id)
     except ObjectDoesNotExist:
         listing = None
     else:
         current_price = int(listing.bids.aggregate(Max('bid_price'))[
-            'bid_price__max'] or 0) or listing.price
-        if(listing.active == False and listing.bids.order_by('-bid_price')[0].owner == request.user):
-            print(listing.bids.order_by('-bid_price')[0])
-            winner = True
+            'bid_price__max']) or listing.price
+        try:
+            if(listing.active == False and listing.bids.order_by('-bid_price')[0].owner == request.user):
+                winner = True
+        except IndexError:
+            winner = False
+        else:
+            winner = False
         comments = listing.comments.all()
     try:
         if(request.user.is_authenticated):
@@ -131,7 +139,8 @@ def listing(request, listing_id):
         "message": message,
         "current_user": request.user == listing.owner,
         "comment_form": CommentForm(),
-        "comments": comments
+        "comments": comments,
+        "authenticated": request.user.is_authenticated,
     })
 
 
@@ -142,6 +151,7 @@ def close_listing(request, listing_id):
     return HttpResponseRedirect(reverse("listing", args=[listing_id]))
 
 
+@ login_required(login_url='/login')
 def watchlist_action(request, action, listing_id):
     listing = Listing.objects.get(pk=listing_id)
     match action:
@@ -155,9 +165,11 @@ def watchlist_action(request, action, listing_id):
     return HttpResponseRedirect(reverse("listing", args=[listing_id]))
 
 
+@ login_required(login_url='/login')
 def create_comment(request, listing_id):
     listing = Listing.objects.get(pk=listing_id)
     form = CommentForm(request.POST)
+    print(request.POST)
     if(form.is_valid):
         comment = form.save(commit=False)
         comment.listing = listing
@@ -166,10 +178,15 @@ def create_comment(request, listing_id):
     return HttpResponseRedirect(reverse("listing", args=[listing_id]))
 
 
+@ login_required(login_url='/login')
 def watchlist(request):
-    listings = request.user.watchlist_items.all()
-    return render(request, "auctions/watchlist.html", {
-        "listings": listings
+    watchlist_listings = request.user.watchlist_items.all()
+    listings = []
+    for listing in watchlist_listings.all():
+        listings += [listing.item]
+    return render(request, "auctions/listings_display.html", {
+        "listings": listings,
+        "title": "Watchlist"
     })
 
 
@@ -182,8 +199,8 @@ def categories(request):
 
 def category_page(request, category_id):
     category = Categories.objects.get(pk=category_id)
-    print(category.listings.all())
-    return render(request, "auctions/category_page.html", {
+    return render(request, "auctions/listings_display.html", {
         "listings": category.listings.all(),
-        "category": category.name
+        "category": category.name,
+        "title": "Category"
     })
