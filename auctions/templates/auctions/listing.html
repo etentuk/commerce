@@ -6,9 +6,9 @@
     <h2 style="margin-bottom: 1rem">{{listing.title}}</h2>
 
     {% if listing %}
+    {% if authenticated %}
     <div class="row">
         <div class="col">
-
             {% if in_watchlist %}
             <a class="btn btn-dark" href="{% url 'watchlist_action' 'remove' listing.id %}" role="button">Remove
                 from
@@ -28,6 +28,8 @@
         </div>
         {% endif %}
     </div>
+    {% endif %}
+
     <div class="row">
         <div class="col">
             <ul class="list-group list-group-flush">
@@ -76,7 +78,7 @@
                         <div class="fw-bold">
                             <b>Status</b>
                         </div>
-                        {{listing.active}}
+                        {% if listing.active %} Open {% else %} Closed{% endif %}
                     </div>
                 </li>
             </ul>
@@ -85,7 +87,7 @@
             {% if listing.image_url %}
             <img src="{{listing.image_url}}" class="img-fluid" alt="...">
             {% else %}
-            <img src="{% static 'auctions/default-no-image-1.png' %}" class="img-fluid" alt="No image available">
+            <img src="{% static 'auctions/no-image.png' %}" class="img-fluid" alt="No image available">
             {% endif %}
         </div>
     </div>
@@ -97,12 +99,12 @@
                 {{message}}
             </div>
             {% endif %}
-            <form action="{% url "listing" listing.id%}" method="post" style="margin-bottom: 1rem">
+            {% if authenticated %}
+            <form action="{% url "listing" listing.id%}" method="post" style="margin-bottom: 1rem" name="bid">
                 {% csrf_token %}
                 <div class="row">
                     <div class="col">
-                        <input type="number" class="form-control " name="bid_price" min={{current_price}}
-                            placeholder="Enter Bid">
+                        <input type="number" class="form-control " name="bid_price" placeholder="Enter Bid">
                     </div>
                     <div class="col">
                         <input type=submit class="btn btn-dark col" value="Place Bid"
@@ -110,16 +112,18 @@
                     </div>
                 </div>
             </form>
-            <form action="{% url "listing_comment" listing.id%}" method="post"
+            <form action="{% url "listing_comment" listing.id%}" method="post" name="comment"
                 style="display: flex; flex-direction: column; width: 80%">
                 {% csrf_token %}
                 {{comment_form}}
                 <input type="submit" class="btn btn-dark" value="Submit Comment" style="margin: 1rem; padding: .5rem">
             </form>
+            {% endif %}
         </div>
         <div class="col">
             <b style="padding-left:20px">Comments</b>
             <div style="height:470px; overflow:auto;">
+                {% if comments %}
                 {% for comment in comments  %}
                 <div class="card" style="margin: 1rem;">
                     <div class="card-header">
@@ -132,20 +136,11 @@
                     </div>
                 </div>
                 {% endfor %}
+                {% else %}
+                <p style="padding-left:20px">No comments on this listing</p>
+                {% endif %}
+
             </div>
-        </div>
-
-
-    </div>
-    <div style="display: flex;">
-
-        <div style="width: 40%; padding-right: 1rem">
-
-
-
-        </div>
-        <div style="width: 60%; margin-bottom: 1rem">
-
         </div>
 
 
