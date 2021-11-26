@@ -1,0 +1,152 @@
+{% extends 'auctions/layout.html' %}
+{% load static %}
+
+{% block body %}
+<div class="container">
+    <h2 style="margin-bottom: 1rem">{{listing.title}}</h2>
+
+    {% if listing %}
+    {% if authenticated %}
+    <div class="row">
+        <div class="col">
+            {% if in_watchlist %}
+            <a class="btn btn-dark" href="{% url 'watchlist_action' 'remove' listing.id %}" role="button">Remove
+                from
+                Watchlist</a>
+            {% else %}
+            <a class="btn btn-dark" href="{% url 'watchlist_action' 'add' listing.id %}" role="button">Add to
+                Watchlist</a>
+            {% endif %}
+        </div>
+
+        {% if current_user and listing.active%}
+        <a class="btn btn-danger" href="{% url "close_listing" listing.id %}" role="button">Close</a>
+        {% endif %}
+        {% if winner %}
+        <div class="alert alert-success" role="alert">
+            You are the Winner!
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col">
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item d-flex justify-content-between align-items-start">
+                    <div class="ms-2 me-auto">
+                        <div class="fw-bold">
+                            <b>Category</b>
+                        </div>
+                        {{listing.category}}
+                    </div>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-start">
+                    <div class="ms-2 me-auto">
+                        <div class="fw-bold">
+                            <b>Description</b>
+                        </div>
+                        {{listing.description}}
+                    </div>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-start">
+                    <div class="ms-2 me-auto">
+                        <div class="fw-bold">
+                            <b>Published</b>
+                        </div>
+                        {{listing.created_at}}
+                    </div>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-start">
+                    <div class="ms-2 me-auto">
+                        <div class="fw-bold">
+                            <b>Price</b>
+                        </div>
+                        ${{current_price}}
+                    </div>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-start">
+                    <div class="ms-2 me-auto">
+                        <div class="fw-bold">
+                            <b>Posted By</b>
+                        </div>
+                        {{listing.owner}}
+                    </div>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-start">
+                    <div class="ms-2 me-auto">
+                        <div class="fw-bold">
+                            <b>Status</b>
+                        </div>
+                        {% if listing.active %} Open {% else %} Closed{% endif %}
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="col d-flex align-items-center">
+            {% if listing.image_url %}
+            <img src="{{listing.image_url}}" class="img-fluid" alt="...">
+            {% else %}
+            <img src="{% static 'auctions/no-image.png' %}" class="img-fluid" alt="No image available">
+            {% endif %}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+
+            {% if message %}
+            <div class="alert alert-danger" role="alert">
+                {{message}}
+            </div>
+            {% endif %}
+            {% if authenticated %}
+            <form action="{% url "listing" listing.id%}" method="post" style="margin-bottom: 1rem" name="bid">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col">
+                        <input type="number" class="form-control " name="bid_price" placeholder="Enter Bid">
+                    </div>
+                    <div class="col">
+                        <input type=submit class="btn btn-dark col" value="Place Bid"
+                            style="margin-bottom: 1rem; width:50%">
+                    </div>
+                </div>
+            </form>
+            <form action="{% url "listing_comment" listing.id%}" method="post" name="comment"
+                style="display: flex; flex-direction: column; width: 80%">
+                {% csrf_token %}
+                {{comment_form}}
+                <input type="submit" class="btn btn-dark" value="Submit Comment" style="margin: 1rem; padding: .5rem">
+            </form>
+            {% endif %}
+        </div>
+        <div class="col">
+            <b style="padding-left:20px">Comments</b>
+            <div style="height:470px; overflow:auto;">
+                {% if comments %}
+                {% for comment in comments  %}
+                <div class="card" style="margin: 1rem;">
+                    <div class="card-header">
+                        {{comment.title}}
+                    </div>
+                    <div class="card-body">
+                        <blockquote class="blockquote mb-0">
+                            <p>{{comment.comment}}</p>
+                        </blockquote>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p style="padding-left:20px">No comments on this listing</p>
+                {% endif %}
+
+            </div>
+        </div>
+
+
+    </div>
+    {% else %} <h1>Error 404: Not Found!</h1>
+    <p>This listing does not exist</p>
+    {% endif %}
+</div>
+{% endblock %}
