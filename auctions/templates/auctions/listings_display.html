@@ -8,7 +8,7 @@
     {% for listing in listings  %}
     <div class="col" style="padding-top:15px; padding-bottom:15px;">
         <div class="card h-100">
-            <div style="height:55%;" class="d-flex align-items-center">
+            <div style="height:60%;" class="d-flex align-items-center">
                 {% if listing.image_url %}
                 <img src="{{listing.image_url}}" class="card-img-top" alt="...">
                 {% else %}
@@ -31,7 +31,10 @@
 </div>
 
 {% else %}
-<div>there is no listing </div>
+{% if message %}
+<h1>{{message}}</h1>
+{% endif %}
+<div>No listings available</div>
 {% endif %}
 
 {% endblock %}

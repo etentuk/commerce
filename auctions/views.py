@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
 from django.db.models.aggregates import Max
 from django.http import HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from .forms import CommentForm, ListingForm
 from django.core.exceptions import ObjectDoesNotExist
@@ -91,45 +91,47 @@ def listing(request, listing_id):
     current_price = 0
     message = ""
     winner = False
+    owner = False
+    comments = []
 
-    if request.method == 'POST' and request.user.is_authenticated:
-        listing = Listing.objects.get(pk=listing_id)
-        max_bid = listing.bids.aggregate(Max('bid_price'))['bid_price__max']
-        placed_bid = int(request.POST['bid_price'])
-        listing_price = int(max_bid or 0) or listing.price
+    if request.method == 'POST':
+        if request.user.is_authenticated:
+            listing = Listing.objects.get(pk=listing_id)
+            max_bid = listing.bids.aggregate(Max('bid_price'))['bid_price__max']
+            placed_bid = int(request.POST['bid_price'])
+            listing_price = int(max_bid or 0) or listing.price
 
-        if((listing_price == listing.price) and not max_bid and placed_bid < listing_price):
-            message = 'Bid must be greater or equal to current value'
-        elif(placed_bid < listing.price and max_bid):
-            message = 'Bid must be greater than current price'
+            if((listing_price == listing.price) and not max_bid and placed_bid < listing_price):
+                message = 'Bid must be greater or equal to current value'
+            elif(placed_bid <= listing.price and max_bid):
+                message = 'Bid must be greater than current price'
+            else:
+                listing.price = placed_bid
+                listing.save()
+                Bid.objects.create(bid_price=placed_bid,
+                                owner=request.user, listing=listing)
         else:
-            listing.price = placed_bid
-            listing.save()
-            Bid.objects.create(bid_price=placed_bid,
-                               owner=request.user, listing=listing)
+            redirect('login')
 
     try:
         listing = Listing.objects.get(pk=listing_id)
+        owner = listing.owner
+        comments = listing.comments.all()
+        try:
+            if(request.user.is_authenticated):
+                added = listing.watchlist_items.get(owner=request.user)
+        except ObjectDoesNotExist:
+            added = None
     except ObjectDoesNotExist:
         listing = None
     else:
         current_price = int(listing.bids.aggregate(Max('bid_price'))[
-            'bid_price__max']) or listing.price
+            'bid_price__max'] or 0) or listing.price
         try:
             if(listing.active == False and listing.bids.order_by('-bid_price')[0].owner == request.user):
                 winner = True
         except IndexError:
             winner = False
-        else:
-            winner = False
-        comments = listing.comments.all()
-    try:
-        if(request.user.is_authenticated):
-            added = listing.watchlist_items.get(owner=request.user)
-        else:
-            added = None
-    except ObjectDoesNotExist:
-        added = None
 
     return render(request, "auctions/listing.html", {
         "listing": listing,
@@ -137,7 +139,7 @@ def listing(request, listing_id):
         "winner": winner,
         "current_price": current_price,
         "message": message,
-        "current_user": request.user == listing.owner,
+        "current_user": request.user == owner,
         "comment_form": CommentForm(),
         "comments": comments,
         "authenticated": request.user.is_authenticated,
@@ -198,9 +200,16 @@ def categories(request):
 
 
 def category_page(request, category_id):
-    category = Categories.objects.get(pk=category_id)
-    return render(request, "auctions/listings_display.html", {
-        "listings": category.listings.all(),
-        "category": category.name,
-        "title": "Category"
-    })
+    try:
+        category = Categories.objects.get(pk=category_id)
+    except ObjectDoesNotExist:
+        return render(request, "auctions/listings_display.html", {
+            "listings": False,
+            "message": "The Category Does not Exist"
+        })
+    else:
+        return render(request, "auctions/listings_display.html", {
+            "listings": category.listings.all(),
+            "category": category.name,
+            "title": "Category"
+        })
